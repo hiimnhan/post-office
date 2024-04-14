@@ -3,14 +3,16 @@ package util
 import "github.com/charmbracelet/bubbles/key"
 
 type KeyMap struct {
-	Up    key.Binding
-	Down  key.Binding
-	Left  key.Binding
-	Right key.Binding
-	Enter key.Binding
-	Help  key.Binding
-	Quit  key.Binding
-	Back  key.Binding
+	Up     key.Binding
+	Down   key.Binding
+	Left   key.Binding
+	Right  key.Binding
+	Enter  key.Binding
+	Help   key.Binding
+	Quit   key.Binding
+	Back   key.Binding
+	Tab    key.Binding
+	Delete key.Binding
 }
 
 var Keys = KeyMap{
@@ -45,5 +47,13 @@ var Keys = KeyMap{
 	Back: key.NewBinding(
 		key.WithKeys("esc"),
 		key.WithHelp("esc", "back"),
+	),
+	Tab: key.NewBinding(
+		key.WithKeys("tab"),
+		key.WithHelp("tab", "change focus panel"),
+	),
+	Delete: key.NewBinding(
+		key.WithKeys("d"),
+		key.WithHelp("d", "remove"),
 	),
 }

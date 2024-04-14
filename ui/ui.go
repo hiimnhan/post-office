@@ -3,10 +3,10 @@ package ui
 import (
 	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 	"github.com/google/uuid"
 	"github.com/hiimnhan/post-office/theme"
@@ -14,26 +14,7 @@ import (
 	"github.com/hiimnhan/post-office/util"
 )
 
-type channelMsg struct{}
-
 var channel chan channelMsg = make(chan channelMsg)
-
-type sidebarItem struct {
-	request types.Request
-}
-type sidebarModel struct {
-	items    []sidebarItem
-	selected int
-}
-
-type model struct {
-	sidebarModel    sidebarModel
-	mainPanelHeight int
-	theme           *theme.Theme
-	panelFocus      focusedPanel
-	fullWidth       int
-	fullHeight      int
-}
 
 func listenToChannelMsg(msg chan channelMsg) tea.Cmd {
 	return func() tea.Msg {
@@ -57,8 +38,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.fullWidth = msg.Width
+		m.fullWidth = msg.Width - 4
 		m.fullHeight = msg.Height
+		m.mainPanelHeight = msg.Height - 2
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, util.Keys.Quit):
@@ -71,6 +53,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.panelFocus == sidebarPanelFocused {
 				m = ControllerSidebarDown(m)
 			}
+		case key.Matches(msg, util.Keys.Enter):
+			if m.panelFocus == sidebarPanelFocused {
+				m = OpenNewRequesTab(m)
+			}
+		case key.Matches(msg, util.Keys.Tab):
+			m = SwitchPanelFocus(m)
+
 		}
 	}
 
@@ -78,9 +67,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
+	var screen string
 	sidebar := m.NewSidebarModel()
+	mainPanel := m.NewMainPanelModel()
 
-	return sidebar
+	screen = lipgloss.JoinHorizontal(lipgloss.Top, sidebar, mainPanel)
+
+	return screen
 }
 
 func NewModel(cfgFile string) model {
@@ -98,20 +91,24 @@ func NewModel(cfgFile string) model {
 		httpRequest, _ := http.NewRequest(methods[rand.Intn(len(methods))], "http://localhost:8080", nil)
 		item = sidebarItem{
 			request: types.Request{
-				Request:   httpRequest,
-				UUID:      uuid.New().String(),
-				CreatedAt: time.Now(),
+				Request: httpRequest,
 			},
+			uuid: uuid.New(),
 		}
 
 		sidebarItems = append(sidebarItems, item)
 	}
+
 	return model{
 		theme: theme,
 		sidebarModel: sidebarModel{
 			items:    sidebarItems,
 			selected: 0,
 		},
-		panelFocus: sidebarPanelFocused,
+		panelFocus: nonePanelFocused,
+		mainPanelModel: mainPanelModel{
+			requestTabs:  []requestTabModel{},
+			openTabUuids: map[uuid.UUID]bool{},
+		},
 	}
 }
