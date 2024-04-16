@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -25,6 +26,7 @@ var (
 		Use:   "post-office",
 		Short: "An API platform for building and managing APIs",
 	}
+	defaultConfigFile = "./config-example.toml"
 )
 
 func Execute() {
@@ -66,6 +68,7 @@ func initConfig() {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			log.Fatal("Cannot get user home directory", err)
+			return
 		}
 
 		path := homeDir + "/.config/post-office"
@@ -78,14 +81,28 @@ func initConfig() {
 			err := os.MkdirAll(path, 0755)
 			if err != nil {
 				log.Fatal("Cannot create config directory", err)
+				return
 			}
+
+			sourceFile, err := os.Open(defaultConfigFile)
+			if err != nil {
+				log.Fatal("Cannot open default config file", err)
+				return
+			}
+			defer sourceFile.Close()
 
 			file, err := os.Create(path + "/config.toml")
 			if err != nil {
 				log.Fatal("Cannot create config file", err)
+				return
+			}
+			defer file.Close()
+			_, err = io.Copy(file, sourceFile)
+			if err != nil {
+				log.Fatal("Cannot copy default config file", err)
+				return
 			}
 
-			defer file.Close()
 		}
 	}
 
@@ -108,7 +125,7 @@ func init() {
 		"config",
 		"c",
 		"",
-		"use this configuration file (default is $POST_OFFICE_CONFIG, or if not set, \n$XDG_CONFIG_HOME/post-office/config.yml)",
+		"use this configuration file (default is $XDG_CONFIG_HOME/post-office/config.toml)",
 	)
 
 	err := viper.BindPFlag("config", rootCmd.PersistentFlags().Lookup("config"))
@@ -129,7 +146,6 @@ func init() {
 			log.Fatal("Cannot parse debug flag", err)
 		}
 
-		// see https://github.com/charmbracelet/lipgloss/issues/73
 		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
 
 		m, logger := createModel(cfgFile, debug)
