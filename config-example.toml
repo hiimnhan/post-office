@@ -1,2 +1,21 @@
 [theme]
+border = "#6c7086"
+backgroundWindow = "#1e1e2e"
+cursor = "#40a02b"
 
+# sidebar
+sideBarTitle = "#74c7ec"
+sideBarItem = "#a6adc8"
+sidebarSelected = "#cba6f7"
+sidebarFocus = "#b4befe"
+
+# main
+mainPanelFocus = "#b4befe"
+
+# method
+methodGet = "#40a02b"
+methodPost = "#df8e1d"
+methodPut = "#1e66f5"
+methodPatch = "#7287fd"
+methodDelete = "#d20f39"
+methodOptions = "#e6e9ef"
